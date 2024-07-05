@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"unicode"
 )
 
 // main is the entry point of the program.
@@ -49,7 +48,7 @@ func main() {
 
 	if inputFile == "" || outputPrefix == "" || macStartAddr == nil {
 		fmt.Println("-i -o and -ms are mandatory parameters to run")
-		fmt.Printf("Usage: \t ./intel-nvm-tool \\\n\t\t\t-i <input stock nvm file> \\\n\t\t\t-m <mac address / mac address range> \\\n\t\t\t-o <output nvm file prefix>")
+		fmt.Printf("Usage: \t ./intel-nvm-tool \\\n\t-i <input stock nvm file> \\\n\t-m <mac address / mac address range> \\\n\t-o <output nvm file prefix>\n")
 		os.Exit(-1)
 	}
 
@@ -59,32 +58,26 @@ func main() {
 		os.Exit(-1)
 	}
 
-	fmt.Printf("input file checksum: %X\n", file[126:128])
-
 	macStart := binary.BigEndian.Uint64(append([]byte{0, 0}, []byte(macStartAddr)...))
 	macEnd := macStart
 	if len(macEndAddr) == 6 {
 		macEnd = binary.BigEndian.Uint64(append([]byte{0, 0}, []byte(macEndAddr)...))
 	}
 
-	// Split based on function f
-	//macParts := strings.FieldsFunc(macAddressRange, splitAny)
-	//fmt.Printf("MAC address range: %#x - %#x\n", macStart, macEnd)
 	fmt.Printf("MAC address range: %s - %s (%d addresses)\n",
 		macStartAddr.String(),
 		macEndAddr.String(),
-		macEnd-macStart,
+		macEnd-macStart+1,
 	)
 
 	macBuffer := make([]byte, 8)
-	for x := macStart; x < macEnd; x++ {
+	for x := macStart; x <= macEnd; x++ {
 		binary.BigEndian.PutUint64(macBuffer, x)
 		file = append(macBuffer[2:8], file[6:]...)
 
 		var checksum uint16
 		for y := 0; y < 0x7d; y += 2 {
-			checksum += binary.BigEndian.Uint16(file[y : y+2])
-			checksum += uint16(file[y])
+			checksum += binary.LittleEndian.Uint16(file[y : y+2])
 		}
 		checksumCorrection := int64(MAGIC_BABA) - int64(checksum)
 		if checksumCorrection < 0 {
@@ -93,19 +86,21 @@ func main() {
 		checksum = uint16(checksumCorrection)
 
 		checksumBytes := make([]byte, 2)
-		binary.BigEndian.PutUint16(checksumBytes, checksum)
+		binary.LittleEndian.PutUint16(checksumBytes, checksum)
 		file[126] = checksumBytes[0]
 		file[127] = checksumBytes[1]
 
-		err = os.WriteFile(fmt.Sprintf("%s-%s.bin", outputPrefix, macStartAddr.String()), file, 0644)
+		err = os.WriteFile(fmt.Sprintf("%s-%s.bin",
+			outputPrefix,
+			fmt.Sprintf("%02X-%02X-%02X-%02X-%02X-%02X",
+				macBuffer[2], macBuffer[3], macBuffer[4],
+				macBuffer[5], macBuffer[6], macBuffer[7])),
+			file,
+			0644,
+		)
 		if err != nil {
 			fmt.Printf("unable to write output file: %s\n", err.Error())
 			os.Exit(-1)
 		}
-		break
 	}
-}
-
-func splitAny(sep rune) bool {
-	return !unicode.IsLetter(sep) && !unicode.IsNumber(sep)
 }
