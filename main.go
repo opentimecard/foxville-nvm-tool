@@ -43,7 +43,7 @@ func main() {
 
 	if inputFile == "" || macStartAddr == nil {
 		fmt.Println("-i and -ms are mandatory parameters to run")
-		fmt.Printf("Usage: \t ./intel-nvm-tool \\\n\t-i <input stock nvm file> \\\n")
+		fmt.Printf("Usage: \t ./foxville-nvm-tool \\\n\t-i <input nvm file> \\\n")
 		fmt.Printf("\t-ms <first mac address> \\\n\t[-me <last mac address>] \\\n")
 		fmt.Printf("\t[-o <output nvm file prefix>]\n")
 		os.Exit(-1)
