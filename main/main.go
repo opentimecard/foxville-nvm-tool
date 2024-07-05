@@ -7,15 +7,10 @@ import (
 	"os"
 )
 
-// main is the entry point of the program.
-// It accepts command line arguments and sorts a slice of integers.
-// The sorted elements are printed to the standard output using fmt.Println.
-func main() {
+// This tool changes the MAC address in an Intel Foxville NVM file and recalculates
+// the checksum for a particular mac address or range
 
-	// ./intel-nvm-tool \
-	//		-i <input stock nvm file> \
-	//		-m <mac address / mac address range> \
-	//		-o <output nvm file prefix>
+func main() {
 
 	var inputFile, outputPrefix string
 	var macStartAddr, macEndAddr net.HardwareAddr
@@ -46,12 +41,17 @@ func main() {
 		}
 	}
 
-	if inputFile == "" || outputPrefix == "" || macStartAddr == nil {
-		fmt.Println("-i -o and -ms are mandatory parameters to run")
-		fmt.Printf("Usage: \t ./intel-nvm-tool \\\n\t-i <input stock nvm file> \\\n\t-m <mac address / mac address range> \\\n\t-o <output nvm file prefix>\n")
+	if inputFile == "" || macStartAddr == nil {
+		fmt.Println("-i and -ms are mandatory parameters to run")
+		fmt.Printf("Usage: \t ./intel-nvm-tool \\\n\t-i <input stock nvm file> \\\n")
+		fmt.Printf("\t-ms <first mac address> \\\n\t[-me <last mac address>] \\\n")
+		fmt.Printf("\t[-o <output nvm file prefix>]\n")
 		os.Exit(-1)
 	}
 
+	if outputPrefix == "" {
+		outputPrefix = "foxville-nvm"
+	}
 	file, err := os.ReadFile(inputFile)
 	if err != nil {
 		fmt.Printf("unable to open input file: %s\n", err.Error())
@@ -62,9 +62,11 @@ func main() {
 	macEnd := macStart
 	if len(macEndAddr) == 6 {
 		macEnd = binary.BigEndian.Uint64(append([]byte{0, 0}, []byte(macEndAddr)...))
+	} else {
+		macEndAddr = macStartAddr
 	}
 
-	fmt.Printf("MAC address range: %s - %s (%d addresses)\n",
+	fmt.Printf("MAC address range: %s - %s (%d address(es))\n",
 		macStartAddr.String(),
 		macEndAddr.String(),
 		macEnd-macStart+1,
