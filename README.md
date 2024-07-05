@@ -1,4 +1,4 @@
-### NVM Tool for Intel Foxville NVM files
+### Command line tool to create Intel Foxville NVM files 
 
 Tool to add mac address to an Intel Foxville NVM image and recalculate the checksum. Supports a single mac or a range for bulk mode
 
