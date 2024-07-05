@@ -86,6 +86,12 @@ func main() {
 			checksum += binary.BigEndian.Uint16(file[y : y+2])
 			checksum += uint16(file[y])
 		}
+		checksumCorrection := int64(MAGIC_BABA) - int64(checksum)
+		if checksumCorrection < 0 {
+			checksumCorrection += 256 * 256
+		}
+		checksum = uint16(checksumCorrection)
+
 		checksumBytes := make([]byte, 2)
 		binary.BigEndian.PutUint16(checksumBytes, checksum)
 		file[126] = checksumBytes[0]

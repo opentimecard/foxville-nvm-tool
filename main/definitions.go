@@ -1,5 +1,6 @@
 package main
 
 const (
-	MACLEN = 6
+	MAC_LEN    = 6
+	MAGIC_BABA = 0xBABA
 )
