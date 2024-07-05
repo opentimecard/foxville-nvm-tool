@@ -1,3 +1,3 @@
-module i225-226-firmware-cutomisation-tool
+module foxville-nvm-tool
 
 go 1.21
